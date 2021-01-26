@@ -792,7 +792,7 @@ class sfeI2cWrapper(object):
 
     def __init__(self, addr, i2c_port):
         self.addr = addr
-        self.bus = smbus.SMBus(i2c_port)
+        self.bus = smbus.SMBus(1)
 
     def read(self, read_data = 1):
         """

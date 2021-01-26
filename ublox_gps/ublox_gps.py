@@ -46,6 +46,7 @@
 import struct
 import serial
 import spidev
+import smbus
 
 from . import sparkfun_predefines as sp
 from . import core
@@ -70,6 +71,9 @@ class UbloxGps(object):
         elif type(hard_port) == spidev.SpiDev:
             sfeSpi = sfeSpiWrapper(hard_port)
             self.hard_port = sfeSpi
+        elif type(hard_port) == smbus.SMBus:
+            sfeI2c = sfeI2cWrapper(hard_port)
+            self.hard_port = sfeI2c
         else:
             self.hard_port = hard_port
 
@@ -771,4 +775,49 @@ class sfeSpiWrapper(object):
 
         return True
 
+class sfeI2cWrapper(object):
+    """
+    sfeI2cWrapper
 
+    Initialize the library with the given port.
+
+    :param i2c_port:    This library simply provides some ducktyping for i2c so
+                        that the ubxtranslator library doesn't complain. It
+                        takes a i2c address and then sets it to the ublox module's
+                        specifications.
+
+    :return:            The sfeI2cWrapper object.
+    :rtype:             Object
+    """
+
+    def __init__(self, addr, i2c_port):
+        self.addr = addr
+        self.bus = smbus.SMBus(i2c_port)
+
+    def read(self, read_data = 1):
+        """
+        Reads a byte or bytes of data from the SPI port. The bytes are
+        converted to a bytes object before being returned.
+
+        :return: The requested bytes
+        :rtype: bytes
+        """
+
+        data = self.bus.read_byte(self.addr)
+        byte_data = bytes([])
+        for d in range(1, read_data):
+
+            byte_data = byte_data + bytes(self.bus.read_byte(self.addr))
+        return byte_data
+
+    def write(self, data):
+        """
+        Writes a byte or bytes of data to the SPI port.
+
+        :return: True on completion
+        :rtype: boolean
+        """
+        for l in range(1, len(data)):
+            self.bus.write_byte(self.addr, bytes(data)[l])
+
+        return True
